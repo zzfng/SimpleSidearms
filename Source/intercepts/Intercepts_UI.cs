@@ -9,6 +9,7 @@ using Verse;
 using Verse.AI;
 using SimpleSidearms.rimworld;
 using PeteTimesSix.SimpleSidearms.Utilities;
+using PeteTimesSix.SimpleSidearms.Rimworld;
 
 namespace PeteTimesSix.SimpleSidearms.Intercepts
 {
@@ -68,6 +69,10 @@ namespace PeteTimesSix.SimpleSidearms.Intercepts
                         else if (weapon.thing.IsRangedWeapon)
                             rangedWeaponMemories.Add(weapon);
                     }
+
+                    Command_Sidearms.Shared.Add(__instance, carriedWeapons, pawnMemory.RememberedWeapons);
+
+                    yield return new Command_Sidearms(__instance);
 
                     yield return new Gizmo_SidearmsList(__instance, carriedWeapons, pawnMemory.RememberedWeapons);
 

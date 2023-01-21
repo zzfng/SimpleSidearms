@@ -38,7 +38,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Intercepts\Intercepts_Caravan.cs" />
+    <Compile Include="UI\SideamsCommandDrawer\Command_Sidearms.cs" />
     <Compile Include="UI\CurveEditorPublic.cs" />
+    <Compile Include="UI\SideamsCommandDrawer\SidearmsCommandDrawer.cs" />
+    <Compile Include="UI\SideamsCommandDrawer\SidearmsWeaponCommandDrawer.cs" />
+    <Compile Include="UI\SideamsCommandDrawer\SidearmsPreferenceCommandDrawer.cs" />
     <Compile Include="UI\ListingExtensions.cs" />
     <Compile Include="UI\SidearmsSpecificExtensions.cs" />
     <Compile Include="UI\UIComponents.cs" />
