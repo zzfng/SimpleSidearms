@@ -39,11 +39,6 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
     public class WeaponStuffDefPairComparer : IComparer<WeaponStuffDefPair>
     {
         public static WeaponStuffDefPairComparer Instance = new WeaponStuffDefPairComparer();
-        public int Compare(ThingDef x, ThingDef y)
-        {
-            if (x == y) return 0;
-            return (int)((y.BaseMarketValue - x.BaseMarketValue) * 1000);
-        }
 
         public int Compare(WeaponStuffDefPair x, WeaponStuffDefPair y)
         {
@@ -53,7 +48,7 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
             int result = (int)((x.WeaponDef.BaseMarketValue - y.WeaponDef.BaseMarketValue) * 1000);
             if (result == 0)
             {
-                result = (int)((x.StuffDef.BaseMarketValue - y.StuffDef.BaseMarketValue) * 1000);
+                result = (int)(( (x.StuffDef == null ? 0f : x.StuffDef.BaseMarketValue) - (y.StuffDef == null ? 0f : y.StuffDef.BaseMarketValue) ) * 1000);
                 if (result == 0)
                     return 1;
             }
@@ -142,7 +137,7 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
     }
 
 
-    public class Command_Sidearms : Command
+    public class Command_Sidearms : Gizmo_SidearmsList
     {
         static List<Pawn> GetUserSelectedPawns()
         {
@@ -154,10 +149,7 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
 
         SidearmsButtonStyle _style;
         static SidearmsWeaponCommandDrawer sharedWeaponDrawer = new SidearmsWeaponCommandDrawer();
-        static SidearmsPreferenceCommandDrawer sharedPreferenceDrawer = new SidearmsPreferenceCommandDrawer();
         SidearmsWeaponCommandDrawer _drawer;
-        Pawn _pawn;
-
 
         private static bool isSidearmsGatherStyle()
         {
@@ -175,9 +167,8 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
             return false;
         }
 
-        public Command_Sidearms(Pawn pawn)
+        public Command_Sidearms(Pawn pawn, IEnumerable<ThingWithComps> carriedWeapons, IEnumerable<ThingDefStuffDefPair> RememberedWeapons) : base(pawn, carriedWeapons, RememberedWeapons)
         {
-            this._pawn = pawn;
         }
 
         List<WeaponStuffDefPair> _gatherWeaponsRange;
@@ -198,9 +189,9 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
             }
         }
 
-        private void lazyInit(float maxWidth)
+        private bool lazyInit(float maxWidth)
         {
-            if (_drawer != null) return;
+            if (_drawer != null) return true;
 
             _style = isSidearmsGatherStyle() ? SidearmsButtonStyle.Gather : SidearmsButtonStyle.Inspect;
 
@@ -209,27 +200,27 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
                 _drawer = sharedWeaponDrawer;
                 collectGatherWeapons();
                 _drawer.Reset(Math.Max( _gatherWeaponsMelee.Count, _gatherWeaponsRange.Count), maxWidth);
+                return true;
             }
-            else if (_style == SidearmsButtonStyle.Inspect)
-            {
-                _drawer = sharedPreferenceDrawer;
-                _drawer.Reset(1, maxWidth);
-            }
+            return false;
         }
 
         public override float GetWidth(float maxWidth)
         {
-            lazyInit(maxWidth);
+            if(!lazyInit(maxWidth) )
+                return base.GetWidth(maxWidth);
             return _drawer.PanelWidth;
         }
+
 
 
         WeaponStuffDefPair _lastInteractdWeapon;
 
         public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth, GizmoRenderParms parms)
         {
-            lazyInit(maxWidth);
-
+            if (!lazyInit(maxWidth)) {
+                return base.GizmoOnGUI(topLeft, maxWidth, parms);
+            }
 
             if (_style == SidearmsButtonStyle.Gather)
             {
@@ -248,13 +239,7 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
             }
             else
             {
-                var d = _drawer as SidearmsPreferenceCommandDrawer;
-                d.BeginDrawPanel(topLeft, maxWidth);
-                {
-                    //d.MouseOverTeachOpportunity(SidearmsDefOf.Concept_SimpleSidearmsBasic, OpportunityType.Important); // need test
-                    d.DrawBackground();
-                }
-                d.EndDrawContent();
+                return new GizmoResult(GizmoState.Clear);
             }
 
 

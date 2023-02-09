@@ -72,9 +72,7 @@ namespace PeteTimesSix.SimpleSidearms.Intercepts
 
                     Command_Sidearms.Shared.Add(__instance, carriedWeapons, pawnMemory.RememberedWeapons);
 
-                    yield return new Command_Sidearms(__instance);
-
-                    yield return new Gizmo_SidearmsList(__instance, carriedWeapons, pawnMemory.RememberedWeapons);
+                    yield return new Command_Sidearms(__instance, carriedWeapons, pawnMemory.RememberedWeapons);
 
                     if (DebugSettings.godMode)
                     {
