@@ -22,7 +22,7 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
         Inspect,
     }
 
-    public class WeaponStuffDefPair
+    public class WeaponStuffDefPair: WeaponStuffDefPairBase
     {
         public ThingDef WeaponDef;
         public ThingDef StuffDef;
@@ -34,6 +34,11 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
             this.StuffDef = weapon.Stuff;
             this.WeaponColor = weapon.DrawColor;
         }
+    }
+
+    public class WeaponStuffDefPairBase
+    {
+        public bool Unarmed = false;
     }
 
     public class WeaponStuffDefPairComparer : IComparer<WeaponStuffDefPair>
@@ -156,7 +161,7 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
             if (GetUserSelectedPawns().Count > 1)
             {
                 int sidearmsPawnCount = 0;
-                foreach (var p in Find.Selector.SelectedPawns)
+                foreach (var p in GetUserSelectedPawns())
                 {
                     if (p.IsColonistPlayerControlled && p.IsValidSidearmsCarrier() && p.inventory != null && p.equipment != null)
                         sidearmsPawnCount++;
@@ -167,7 +172,7 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
             return false;
         }
 
-        public Command_Sidearms(Pawn pawn, IEnumerable<ThingWithComps> carriedWeapons, IEnumerable<ThingDefStuffDefPair> RememberedWeapons) : base(pawn, carriedWeapons, RememberedWeapons)
+        public Command_Sidearms(Pawn pawn, List<ThingWithComps> carriedWeapons, List<ThingDefStuffDefPair> RememberedWeapons, CompSidearmMemory pawnMemory) : base(pawn, carriedWeapons, RememberedWeapons, pawnMemory)
         {
         }
 
@@ -189,17 +194,16 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
             }
         }
 
-        private bool lazyInit(float maxWidth)
+        private bool initOnce(float maxWidth)
         {
             if (_drawer != null) return true;
 
             _style = isSidearmsGatherStyle() ? SidearmsButtonStyle.Gather : SidearmsButtonStyle.Inspect;
-
             if (_style == SidearmsButtonStyle.Gather)
             {
                 _drawer = sharedWeaponDrawer;
                 collectGatherWeapons();
-                _drawer.Reset(Math.Max( _gatherWeaponsMelee.Count, _gatherWeaponsRange.Count), maxWidth);
+                _drawer.Reset(Math.Max( _gatherWeaponsMelee.Count + 1, _gatherWeaponsRange.Count), maxWidth);
                 return true;
             }
             return false;
@@ -207,20 +211,18 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
 
         public override float GetWidth(float maxWidth)
         {
-            if(!lazyInit(maxWidth) )
+            if(!initOnce(maxWidth) )
                 return base.GetWidth(maxWidth);
             return _drawer.PanelWidth;
         }
 
 
 
-        WeaponStuffDefPair _lastInteractdWeapon;
+        WeaponStuffDefPairBase _lastInteractdWeapon;
 
         public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth, GizmoRenderParms parms)
         {
-            if (!lazyInit(maxWidth)) {
-                return base.GizmoOnGUI(topLeft, maxWidth, parms);
-            }
+            initOnce(maxWidth);
 
             if (_style == SidearmsButtonStyle.Gather)
             {
@@ -232,35 +234,44 @@ namespace PeteTimesSix.SimpleSidearms.Rimworld
                     d.DrawBackground();
                     d.BeginDrawContent();
                     d.DrawWeaponIcons(_gatherWeaponsRange, rowIndex: 0);
-                    d.DrawWeaponIcons(_gatherWeaponsMelee, rowIndex: 1);
+                    d.DrawWeaponIcons(new List<WeaponStuffDefPairBase>() { new WeaponStuffDefPairBase() { Unarmed = true } }, rowIndex: 1, columnIndex: 0);
+                    d.DrawWeaponIcons(_gatherWeaponsMelee, rowIndex: 1, columnIndex: 1);
                     d.EndDrawContent();
                     d.EndDrawPanel();
                 }
+
+                _lastInteractdWeapon = _drawer.GetLastInteractedWeapon();
+                if (_lastInteractdWeapon != null)
+                {
+                    var weapon = _lastInteractdWeapon as WeaponStuffDefPair;
+                    if (weapon != null) {
+                        foreach (var (pawnInstance, weaponInstance) in Shared.GetPawnsOfWeaponCarried(weapon, GetUserSelectedPawns()))
+                        {
+                            ThingDefStuffDefPair weaponType = weaponInstance.toThingDefStuffDefPair();
+                            CompSidearmMemory.GetMemoryCompForPawn(pawnInstance).SetWeaponAsForced(weaponType, pawnInstance.Drafted);
+                            var dropMode = pawnInstance.Drafted ? DroppingModeEnum.Combat : DroppingModeEnum.Calm;
+                            if (pawnInstance.equipment.Primary != weaponInstance)
+                                WeaponAssingment.equipSpecificWeaponTypeFromInventory(pawnInstance, weaponType, MiscUtils.shouldDrop(pawnInstance, dropMode, false), false);
+                        }
+                    }
+                    else if (_lastInteractdWeapon.Unarmed)
+                    {
+
+                        foreach (var pawnInstance in  GetUserSelectedPawns())
+                        {
+                            CompSidearmMemory.GetMemoryCompForPawn(pawnInstance)?.SetUnarmedAsForced(true);
+                            WeaponAssingment.equipSpecificWeapon(pawnInstance, null, false, false);
+                        }
+                    }
+                    _lastInteractdWeapon = null;
+                }
+
+                return new GizmoResult(GizmoState.Clear);
             }
             else
             {
-                return new GizmoResult(GizmoState.Clear);
+                return base.GizmoOnGUI(topLeft, maxWidth, parms);
             }
-
-
-            _lastInteractdWeapon = _drawer.GetLastInteractedWeapon();
-            if (_lastInteractdWeapon != null)
-            {
-                if (_style == SidearmsButtonStyle.Gather)
-                {
-                    foreach (var (pawnInstance, weaponInstance) in Shared.GetPawnsOfWeaponCarried(_lastInteractdWeapon, GetUserSelectedPawns()))
-                    {
-                        ThingDefStuffDefPair weaponType = weaponInstance.toThingDefStuffDefPair();
-                        CompSidearmMemory.GetMemoryCompForPawn(pawnInstance).SetWeaponAsForced(weaponType, pawnInstance.Drafted);
-                        var dropMode = pawnInstance.Drafted ? DroppingModeEnum.Combat : DroppingModeEnum.Calm;
-                        if (pawnInstance.equipment.Primary != weaponInstance)
-                            WeaponAssingment.equipSpecificWeaponTypeFromInventory(pawnInstance, weaponType, MiscUtils.shouldDrop(pawnInstance, dropMode, false), false);
-                    }
-                }
-                _lastInteractdWeapon = null;
-            }
-
-            return new GizmoResult(GizmoState.Clear);
         }
 
     }

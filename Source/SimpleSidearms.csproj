@@ -119,10 +119,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>$(ProjectDir)PostBuild.bat $(ProjectDir) $(ProjectName) "" $(Configuration)</PostBuildEvent>
+    <PostBuildEvent>$(ProjectDir)PostBuild.bat $(ProjectDir) $(ProjectName) "1.5" $(Configuration)</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>$(ProjectDir)PreBuild.bat $(ProjectDir) $(ProjectName) "" $(Configuration)</PreBuildEvent>
+    <PreBuildEvent>$(ProjectDir)PreBuild.bat $(ProjectDir) $(ProjectName) "1.5" $(Configuration)</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

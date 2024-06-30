@@ -70,9 +70,10 @@ namespace PeteTimesSix.SimpleSidearms.Intercepts
                             rangedWeaponMemories.Add(weapon);
                     }
 
+                    List<ThingWithComps> carriedWeapons = __instance.GetCarriedWeapons(includeTools: true);
                     Command_Sidearms.Shared.Add(__instance, carriedWeapons, pawnMemory.RememberedWeapons);
 
-                    yield return new Command_Sidearms(__instance, carriedWeapons, pawnMemory.RememberedWeapons);
+                    yield return new Command_Sidearms(__instance, carriedWeapons, pawnMemory.RememberedWeapons, pawnMemory);
 
                     if (SimpleSidearms.Settings.ShowBrainscope)
                     {

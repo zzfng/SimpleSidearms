@@ -1,4 +1,5 @@
 ﻿using PeteTimesSix.SimpleSidearms.Rimworld;
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace PeteTimesSix.SimpleSidearms.UI.SideamsCommandDrawer
         public static readonly Color weapon_color_mouseover = new Color(0.6f, 0.6f, 0.4f, 1f);
 
 
-        WeaponStuffDefPair _lastInteractedWeapon;
+        WeaponStuffDefPairBase _lastInteractedWeapon;
 
         public SidearmsWeaponCommandDrawer()
         { 
@@ -66,9 +67,8 @@ namespace PeteTimesSix.SimpleSidearms.UI.SideamsCommandDrawer
                 ));
         }
 
-        public void DrawWeaponIcons(IEnumerable<WeaponStuffDefPair> weapons, int rowIndex)
+        public void DrawWeaponIcons(IEnumerable<WeaponStuffDefPairBase> weapons, int rowIndex, int columnIndex = 0)
         {
-            int columnIndex = 0;
             foreach (var w in weapons)
             {
                 BeginDrawWeapon(rowIndex, columnIndex);
@@ -78,7 +78,7 @@ namespace PeteTimesSix.SimpleSidearms.UI.SideamsCommandDrawer
             }
         }
 
-        public virtual void DrawWeapon(WeaponStuffDefPair weapon)
+        public virtual void DrawWeapon(WeaponStuffDefPairBase weaponBase)
         {
             var rect = DrawingRect;
             if (Mouse.IsOver(rect))
@@ -87,27 +87,38 @@ namespace PeteTimesSix.SimpleSidearms.UI.SideamsCommandDrawer
                 GUI.color = weapon_color_base;
             GUI.DrawTexture(rect, TextureResources.drawPocket);
 
-            var graphic = weapon.WeaponDef.graphic;
-            if (graphic is Graphic_StackCount)
-                graphic = (graphic as Graphic_StackCount).SubGraphicForStackCount(1, weapon.WeaponDef);
+            Texture resolvedIcon;
+            
+            if (weaponBase.Unarmed)
+            {
+                resolvedIcon = TexCommand.AttackMelee;
+                GUI.color = Color.white;
+            }
+            else
+            {
+                var weapon = weaponBase as WeaponStuffDefPair;
+                var graphic = weapon.WeaponDef.graphic;
+                if (graphic is Graphic_StackCount)
+                    graphic = (graphic as Graphic_StackCount).SubGraphicForStackCount(1, weapon.WeaponDef);
 
-            Texture resolvedIcon = (Texture2D)graphic.MatEast.mainTexture;
-            GUI.color = weapon.WeaponColor;
+                resolvedIcon = (Texture2D)graphic.MatEast.mainTexture;
+                GUI.color = weapon.WeaponColor;
+            }
+
             GUI.DrawTexture(rect, resolvedIcon);
 
             if (Widgets.ButtonInvisible(rect))
             {
                 if (Event.current.button == 0)
                 {
-                    _lastInteractedWeapon = weapon;
+                    _lastInteractedWeapon = weaponBase;
                     Event.current.Use();
                 }
             }
         }
-
         
 
-        public WeaponStuffDefPair GetLastInteractedWeapon() 
+        public WeaponStuffDefPairBase GetLastInteractedWeapon() 
         { 
             return _lastInteractedWeapon;  
         }

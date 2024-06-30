@@ -24,12 +24,12 @@ exit /b 0
 @echo off
 SETLOCAL ENABLEDELAYEDEXPANSION
 
-
-xcopy /y /d /e /f "%source_dll%" "%solution_dir%Assemblies\"
-xcopy /y /d /e /f "%source_dll%" "%mod_dir%Assemblies\"
 if "%special_version%"=="" (
 	xcopy /y /d /e /f "%source_dll%" "%solution_dir%%sepcial_version%\Assemblies\"
 	xcopy /y /d /e /f "%source_dll%" "%mod_dir%%sepcial_version%\Assemblies\"
+) else (
+	xcopy /y /d /e /f "%source_dll%" "%mod_dir%Assemblies\"
+	xcopy /y /d /e /f "%source_dll%" "%solution_dir%Assemblies\"
 )
 for %%d in (About Defs Languages Patches Textures) do (
 	xcopy /i /y /e /d /f %solution_dir%%%d %mod_dir%%%d
