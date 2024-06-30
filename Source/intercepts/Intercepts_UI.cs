@@ -50,20 +50,20 @@ namespace PeteTimesSix.SimpleSidearms.Intercepts
         public static IEnumerable<Gizmo> Postfix(IEnumerable<Gizmo> __result, Pawn __instance)
         {
             //This postfix inserts the SimpleSidearms gizmo before all other gizmos
-            if (__instance.IsValidSidearmsCarrier() && (__instance.IsColonistPlayerControlled
+            if (__instance.IsValidSidearmsCarrierRightNow() && (__instance.IsColonistPlayerControlled
                 || DebugSettings.godMode) && __instance.equipment != null && __instance.inventory != null
                 )
             {
-                IEnumerable<ThingWithComps> carriedWeapons = __instance.getCarriedWeapons(includeTools: true);
-
                 CompSidearmMemory pawnMemory = CompSidearmMemory.GetMemoryCompForPawn(__instance);
                 if (pawnMemory != null)
                 {
                     List<ThingDefStuffDefPair> rangedWeaponMemories = new List<ThingDefStuffDefPair>();
                     List<ThingDefStuffDefPair> meleeWeaponMemories = new List<ThingDefStuffDefPair>();
 
-                    foreach (ThingDefStuffDefPair weapon in pawnMemory.RememberedWeapons)
+                    var rememberedWeapons = pawnMemory.RememberedWeapons;
+                    for (int i = rememberedWeapons.Count - 1; i >= 0; i--)
                     {
+                        ThingDefStuffDefPair weapon = rememberedWeapons[i];
                         if (weapon.thing.IsMeleeWeapon)
                             meleeWeaponMemories.Add(weapon);
                         else if (weapon.thing.IsRangedWeapon)
@@ -74,7 +74,7 @@ namespace PeteTimesSix.SimpleSidearms.Intercepts
 
                     yield return new Command_Sidearms(__instance, carriedWeapons, pawnMemory.RememberedWeapons);
 
-                    if (DebugSettings.godMode)
+                    if (SimpleSidearms.Settings.ShowBrainscope)
                     {
                         yield return new Gizmo_Brainscope(__instance);
                     }
@@ -122,7 +122,7 @@ namespace PeteTimesSix.SimpleSidearms.Intercepts
 
                         bool toolUse = ((pawn.CombinedDisabledWorkTags & WorkTags.Violent) != 0) || thingWithComps.toThingDefStuffDefPair().isToolNotWeapon();
                         string textPostfix = toolUse ? "AsTool".Translate() : "AsSidearm".Translate();
-                        if (!StatCalculator.canUseSidearmInstance(thingWithComps, pawn, out string errStr))
+                        if (!StatCalculator.CanPickupSidearmInstance(thingWithComps, pawn, out string errStr))
                         {
                             string orderText = "CannotEquip".Translate(thingWithComps.LabelShort) + textPostfix;
 
