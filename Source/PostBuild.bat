@@ -1,4 +1,6 @@
 @echo off
+SETLOCAL ENABLEDELAYEDEXPANSION
+
 set project_dir=%1
 set project_name=%2
 set sepcial_version=%~3
@@ -16,20 +18,24 @@ set mod_dir=%rimworld_dir%Mods\%mod_name%\
 
 set solution_dir=%project_dir:~0,-7%
 set source_dll=%project_dir%bin\%mod_name%.dll
+set source_pdb=%project_dir%bin\%mod_name%.pdb
 if not exist "%source_dll%" ( 
 echo %source_dll% not exist	
 exit /b 0
 )
 
-@echo off
-SETLOCAL ENABLEDELAYEDEXPANSION
-
 if "%special_version%"=="" (
 	xcopy /y /d /e /f "%source_dll%" "%solution_dir%%sepcial_version%\Assemblies\"
 	xcopy /y /d /e /f "%source_dll%" "%mod_dir%%sepcial_version%\Assemblies\"
+	if %configuration%==Debug (
+		xcopy /y /d /e /f "%source_pdb%" "%mod_dir%%sepcial_version%\Assemblies\"
+	)
 ) else (
 	xcopy /y /d /e /f "%source_dll%" "%mod_dir%Assemblies\"
 	xcopy /y /d /e /f "%source_dll%" "%solution_dir%Assemblies\"
+		if %configuration%==Debug (
+		xcopy /y /d /e /f "%source_pdb%" "%mod_dir%Assemblies\"
+	)
 )
 for %%d in (About Defs Languages Patches Textures) do (
 	xcopy /i /y /e /d /f %solution_dir%%%d %mod_dir%%%d
