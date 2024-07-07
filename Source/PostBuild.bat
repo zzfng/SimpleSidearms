@@ -25,16 +25,20 @@ exit /b 0
 )
 
 if "%special_version%"=="" (
-	xcopy /y /d /e /f "%source_dll%" "%solution_dir%%sepcial_version%\Assemblies\"
 	xcopy /y /d /e /f "%source_dll%" "%mod_dir%%sepcial_version%\Assemblies\"
 	if %configuration%==Debug (
 		xcopy /y /d /e /f "%source_pdb%" "%mod_dir%%sepcial_version%\Assemblies\"
 	)
+	if %configuration%==Release (
+		xcopy /y /d /e /f "%source_dll%" "%solution_dir%%sepcial_version%\Assemblies\"
+	)
 ) else (
 	xcopy /y /d /e /f "%source_dll%" "%mod_dir%Assemblies\"
-	xcopy /y /d /e /f "%source_dll%" "%solution_dir%Assemblies\"
-		if %configuration%==Debug (
+	if %configuration%==Debug (
 		xcopy /y /d /e /f "%source_pdb%" "%mod_dir%Assemblies\"
+	)
+	if %configuration%==Release (
+		xcopy /y /d /e /f "%source_dll%" "%solution_dir%Assemblies\"
 	)
 )
 for %%d in (About Defs Languages Patches Textures) do (

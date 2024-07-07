@@ -398,6 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 Source/LOCALVARIABLES*.bat
-Assemblies/*
-*/Assemblies/*
 
